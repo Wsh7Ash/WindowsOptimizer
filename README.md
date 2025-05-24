@@ -46,6 +46,42 @@ A comprehensive PowerShell script for optimizing Windows performance, privacy, a
 - Windows Tips control
 - Activity history management
 
+### 8. Windows Debloater
+- Removes unnecessary Windows apps
+- Disables unwanted Windows features
+- Removes telemetry and data collection
+- Disables unnecessary scheduled tasks
+- Removes OneDrive integration
+- Cleans temporary files
+- Optimizes system performance
+
+### 9. Gaming Optimization
+- Network throttling optimization
+- Gaming mode enhancements
+- Visual effects optimization
+- Full-screen optimizations
+- Network adapter tuning
+- Input lag reduction
+- System responsiveness improvement
+
+### 10. Security Optimization
+- Windows Defender enhancement
+- Firewall optimization
+- Controlled folder access
+- Network protection
+- Real-time monitoring
+- Email scanning protection
+- Behavior monitoring
+
+### 11. Advanced System Optimization
+- Boot configuration optimization
+- System response enhancement
+- HPET optimization
+- Power settings tuning
+- Registry optimization
+- Desktop manager enhancement
+- Explorer performance tuning
+
 ## 📋 Requirements
 
 - Windows 10/11
@@ -86,7 +122,11 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 5: Network Optimization
 6: Storage Optimization
 7: Privacy Optimization
-8: Run All Optimizations
+8: Windows Debloater
+9: Gaming Optimization
+10: Security Optimization
+11: Advanced System Optimization
+12: Run All Optimizations
 Q: Quit
 ====================================================
 ```
@@ -97,6 +137,9 @@ Q: Quit
 - Some optimizations may require a system restart
 - Not all optimizations may be suitable for every system
 - Review the changes before applying them
+- The Windows Debloater will remove pre-installed apps and features
+- Some security features may need to be adjusted based on your needs
+- Gaming optimizations may affect non-gaming applications
 
 ## 🛡️ Safety Features
 
@@ -104,6 +147,9 @@ Q: Quit
 - Error handling for each optimization
 - Confirmation prompts for major changes
 - Easy-to-use menu interface
+- Safe removal of Windows components
+- Reversible optimizations
+- Detailed status reporting
 
 ## 🤝 Contributing
 
@@ -118,6 +164,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Windows PowerShell community
 - System optimization experts
 - Open-source contributors
+- Gaming community feedback
+- Security researchers
 
 ## ⚡ Performance Impact
 
@@ -128,6 +176,12 @@ The optimizations can potentially improve:
 - Memory management
 - Network speed
 - Storage efficiency
+- Overall system performance
+- Reduced system bloat
+- Input lag
+- Application loading times
+- Security posture
+- System stability
 
 ## 🔍 Troubleshooting
 
@@ -136,6 +190,8 @@ If you encounter issues:
 2. Check the Windows Event Viewer for errors
 3. Restore from the created restore point if needed
 4. Open an issue on GitHub for support
+5. Check the detailed error messages in the console
+6. Verify system compatibility before optimization
 
 ## 🔄 Updates
 

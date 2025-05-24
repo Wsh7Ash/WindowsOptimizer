@@ -228,6 +228,309 @@ function Optimize-Privacy {
     Write-Host "Privacy optimization completed!" -ForegroundColor Green
 }
 
+# 8. Windows Debloater
+function Remove-WindowsBloat {
+    Write-Host "`nDebloating Windows..." -ForegroundColor Cyan
+
+    # List of apps to remove
+    $appsToRemove = @(
+        "Microsoft.3DBuilder"
+        "Microsoft.BingFinance"
+        "Microsoft.BingNews"
+        "Microsoft.BingSports"
+        "Microsoft.BingWeather"
+        "Microsoft.GetHelp"
+        "Microsoft.Getstarted"
+        "Microsoft.Messaging"
+        "Microsoft.Microsoft3DViewer"
+        "Microsoft.MicrosoftOfficeHub"
+        "Microsoft.MicrosoftSolitaireCollection"
+        "Microsoft.MixedReality.Portal"
+        "Microsoft.Office.OneNote"
+        "Microsoft.OneConnect"
+        "Microsoft.People"
+        "Microsoft.Print3D"
+        "Microsoft.SkypeApp"
+        "Microsoft.StorePurchaseApp"
+        "Microsoft.WindowsAlarms"
+        "Microsoft.WindowsCamera"
+        "Microsoft.WindowsFeedbackHub"
+        "Microsoft.WindowsMaps"
+        "Microsoft.WindowsSoundRecorder"
+        "Microsoft.Xbox.TCUI"
+        "Microsoft.XboxApp"
+        "Microsoft.XboxGameOverlay"
+        "Microsoft.XboxGamingOverlay"
+        "Microsoft.XboxIdentityProvider"
+        "Microsoft.XboxSpeechToTextOverlay"
+        "Microsoft.YourPhone"
+        "Microsoft.ZuneMusic"
+        "Microsoft.ZuneVideo"
+    )
+
+    # Remove Windows Apps
+    foreach ($app in $appsToRemove) {
+        Write-Host "Removing $app..." -NoNewline
+        try {
+            Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+            Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like $app | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            Write-Host "Done!" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed!" -ForegroundColor Red
+        }
+    }
+
+    # Disable Windows Features
+    $featuresToDisable = @(
+        "WindowsMediaPlayer"
+        "Internet-Explorer-Optional-*"
+        "WorkFolders-Client"
+        "FaxServicesClientPackage"
+    )
+
+    foreach ($feature in $featuresToDisable) {
+        Write-Host "Disabling Windows Feature: $feature..." -NoNewline
+        try {
+            Disable-WindowsOptionalFeature -Online -FeatureName $feature -NoRestart -ErrorAction SilentlyContinue | Out-Null
+            Write-Host "Done!" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed!" -ForegroundColor Red
+        }
+    }
+
+    # Disable Scheduled Tasks
+    $tasksToDisable = @(
+        "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser"
+        "\Microsoft\Windows\Application Experience\ProgramDataUpdater"
+        "\Microsoft\Windows\Application Experience\StartupAppTask"
+        "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator"
+        "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
+        "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector"
+        "\Microsoft\Windows\Feedback\Siuf\DmClient"
+        "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload"
+    )
+
+    foreach ($task in $tasksToDisable) {
+        Write-Host "Disabling Scheduled Task: $task..." -NoNewline
+        try {
+            Disable-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue | Out-Null
+            Write-Host "Done!" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed!" -ForegroundColor Red
+        }
+    }
+
+    # Disable Telemetry and Data Collection
+    Write-Host "Disabling Telemetry and Data Collection..." -NoNewline
+    try {
+        # Disable Telemetry
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Value 0 -Type DWord
+        
+        # Disable Customer Experience Improvement Program
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Value 0 -Type DWord
+        
+        # Disable Application Telemetry
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat" -Name "AITEnable" -Value 0 -Type DWord
+        
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Disable OneDrive
+    Write-Host "Disabling OneDrive..." -NoNewline
+    try {
+        if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive") {
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Value 1
+        }
+        Stop-Process -Name "OneDrive" -ErrorAction SilentlyContinue
+        Start-Sleep -s 2
+        $oneDrivePath = "$env:SYSTEMROOT\SysWOW64\OneDriveSetup.exe"
+        if (Test-Path $oneDrivePath) {
+            & $oneDrivePath /uninstall
+        }
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Remove Temporary Files
+    Write-Host "Cleaning Temporary Files..." -NoNewline
+    try {
+        Remove-Item -Path "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    Write-Host "Windows Debloating completed!" -ForegroundColor Green
+}
+
+# 9. Gaming Optimization
+function Optimize-Gaming {
+    Write-Host "`nOptimizing for Gaming Performance..." -ForegroundColor Cyan
+
+    # Optimize Network Settings for Gaming
+    Write-Host "Optimizing Network Settings..." -NoNewline
+    try {
+        # Set Network Throttling Index
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 0xffffffff
+        
+        # Set Gaming Priorities
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Value 6
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Value "High"
+        
+        # Optimize Network Adapter
+        $networkAdapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and $_.MediaType -eq "802.3"}
+        if ($networkAdapter) {
+            Set-NetAdapterAdvancedProperty -Name $networkAdapter.Name -DisplayName "Flow Control" -DisplayValue "Disabled" -ErrorAction SilentlyContinue
+            Set-NetAdapterAdvancedProperty -Name $networkAdapter.Name -DisplayName "Interrupt Moderation" -DisplayValue "Disabled" -ErrorAction SilentlyContinue
+            Set-NetAdapterAdvancedProperty -Name $networkAdapter.Name -DisplayName "Power Saving Mode" -DisplayValue "Disabled" -ErrorAction SilentlyContinue
+        }
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Optimize Visual Effects for Performance
+    Write-Host "Optimizing Visual Effects..." -NoNewline
+    try {
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Disable Full-Screen Optimizations for Games
+    Write-Host "Optimizing Full-Screen Settings..." -NoNewline
+    try {
+        Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_DXGIHonorFSEWindowsCompatible" -Value 1
+        Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehavior" -Value 2
+        Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_FSEBehaviorMode" -Value 2
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    Write-Host "Gaming optimization completed!" -ForegroundColor Green
+}
+
+# 10. Security Optimization
+function Optimize-Security {
+    Write-Host "`nOptimizing System Security..." -ForegroundColor Cyan
+
+    # Enable Windows Defender Features
+    Write-Host "Enhancing Windows Defender..." -NoNewline
+    try {
+        Set-MpPreference -DisableRealtimeMonitoring $false
+        Set-MpPreference -DisableIOAVProtection $false
+        Set-MpPreference -DisableBehaviorMonitoring $false
+        Set-MpPreference -DisableBlockAtFirstSeen $false
+        Set-MpPreference -DisableEmailScanning $false
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Configure Windows Firewall
+    Write-Host "Configuring Firewall..." -NoNewline
+    try {
+        Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+        Set-NetFirewallProfile -DefaultInboundAction Block -DefaultOutboundAction Allow -NotifyOnListen True -AllowUnicastResponseToMulticast True
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Enable Controlled Folder Access
+    Write-Host "Enabling Controlled Folder Access..." -NoNewline
+    try {
+        Set-MpPreference -EnableControlledFolderAccess Enabled
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Enable Network Protection
+    Write-Host "Enabling Network Protection..." -NoNewline
+    try {
+        Set-MpPreference -EnableNetworkProtection Enabled
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    Write-Host "Security optimization completed!" -ForegroundColor Green
+}
+
+# 11. Advanced System Optimization
+function Optimize-AdvancedSystem {
+    Write-Host "`nPerforming Advanced System Optimization..." -ForegroundColor Cyan
+
+    # Optimize Boot Configuration
+    Write-Host "Optimizing Boot Configuration..." -NoNewline
+    try {
+        bcdedit /set useplatformclock false
+        bcdedit /set disabledynamictick yes
+        bcdedit /set useplatformtick yes
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Optimize System Response
+    Write-Host "Optimizing System Response..." -NoNewline
+    try {
+        # Disable HPET (High Precision Event Timer)
+        bcdedit /deletevalue useplatformclock
+        
+        # Optimize Win32Priority
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38
+        
+        # Optimize NTFS
+        fsutil behavior set disablelastaccess 1
+        fsutil behavior set disable8dot3 1
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Optimize Power Settings
+    Write-Host "Optimizing Power Settings..." -NoNewline
+    try {
+        powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
+        powercfg /setactive e9a42b02-d5df-448d-aa00-03f14749eb61
+        
+        # Disable USB Selective Suspend
+        powercfg -setacvalueindex scheme_current 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0
+        powercfg -setdcvalueindex scheme_current 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    # Optimize Registry for Performance
+    Write-Host "Optimizing Registry..." -NoNewline
+    try {
+        # Increase System Responsiveness
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0
+        
+        # Optimize Desktop Window Manager
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value 0
+        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0
+        
+        # Optimize Explorer
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Value 0
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Value 0
+        Write-Host "Done!" -ForegroundColor Green
+    } catch {
+        Write-Host "Failed!" -ForegroundColor Red
+    }
+
+    Write-Host "Advanced system optimization completed!" -ForegroundColor Green
+}
+
 # Main Menu Function
 function Show-Menu {
     Clear-Host
@@ -239,7 +542,11 @@ function Show-Menu {
     Write-Host "5: Network Optimization"
     Write-Host "6: Storage Optimization"
     Write-Host "7: Privacy Optimization"
-    Write-Host "8: Run All Optimizations"
+    Write-Host "8: Windows Debloater"
+    Write-Host "9: Gaming Optimization"
+    Write-Host "10: Security Optimization"
+    Write-Host "11: Advanced System Optimization"
+    Write-Host "12: Run All Optimizations"
     Write-Host "Q: Quit"
     Write-Host "====================================================" -ForegroundColor Cyan
 }
@@ -290,6 +597,22 @@ do {
             pause
         }
         '8' {
+            Remove-WindowsBloat
+            pause
+        }
+        '9' {
+            Optimize-Gaming
+            pause
+        }
+        '10' {
+            Optimize-Security
+            pause
+        }
+        '11' {
+            Optimize-AdvancedSystem
+            pause
+        }
+        '12' {
             Optimize-Memory
             Optimize-CPU
             Optimize-GPU
@@ -297,6 +620,10 @@ do {
             Optimize-Network
             Optimize-Storage
             Optimize-Privacy
+            Remove-WindowsBloat
+            Optimize-Gaming
+            Optimize-Security
+            Optimize-AdvancedSystem
             Write-Host "`nAll optimizations completed! Please restart your computer for changes to take effect." -ForegroundColor Green
             pause
         }
