@@ -102,6 +102,7 @@ cd WindowsOptimizer
 
 ## 💻 Usage
 
+### Main Optimizer
 1. Right-click on `WindowsOptimizer.ps1` and select "Run with PowerShell as Administrator"
    
    OR
@@ -111,6 +112,19 @@ cd WindowsOptimizer
 Set-ExecutionPolicy Bypass -Scope Process -Force
 .\WindowsOptimizer.ps1
 ```
+
+### Watermark Removal
+To remove the Windows activation watermark:
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\RemoveWatermark.ps1
+```
+
+⚠️ **Important**: The watermark removal script:
+- Creates a system restore point before making changes
+- Backs up modified system files
+- Requires a system restart to take effect
+- May need to be run again after major Windows updates
 
 3. Select optimization options from the menu:
 ```
