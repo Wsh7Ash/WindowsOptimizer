@@ -531,6 +531,91 @@ function Optimize-AdvancedSystem {
     Write-Host "Advanced system optimization completed!" -ForegroundColor Green
 }
 
+# 12. Extreme Windows Update Disabler
+function Disable-WindowsUpdateExtreme {
+    Write-Host "`nDisabling Windows Update (Extreme Mode)..." -ForegroundColor Magenta
+
+    # 1. Stop and disable Windows Update services
+    $services = @(
+        'wuauserv',           # Windows Update
+        'bits',               # Background Intelligent Transfer Service
+        'dosvc',              # Delivery Optimization
+        'WaaSMedicSvc',       # Windows Update Medic Service
+        'UsoSvc',             # Update Orchestrator Service
+        'DoSvc',              # Delivery Optimization
+        'WaaSMedicSvc',       # Windows Update Medic Service
+        'SgrmBroker',         # System Guard Runtime Monitor Broker
+        'WpnService'          # Windows Push Notifications
+    )
+    foreach ($svc in $services) {
+        try {
+            Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+            Set-Service -Name $svc -StartupType Disabled -ErrorAction SilentlyContinue
+            Write-Host "Disabled service: $svc" -ForegroundColor Green
+        } catch {
+            Write-Host "Could not disable service: $svc" -ForegroundColor Yellow
+        }
+    }
+
+    # 2. Block Windows Update via Group Policy/Registry
+    try {
+        # Disable Windows Update in Group Policy
+        New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Force | Out-Null
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Name "DisableWindowsUpdateAccess" -Value 1 -Type DWord
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Name "DoNotConnectToWindowsUpdateInternetLocations" -Value 1 -Type DWord
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Name "WUServer" -Value "127.0.0.1"
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Name "WUStatusServer" -Value "127.0.0.1"
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1 -Type DWord
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUOptions" -Value 1 -Type DWord
+        Write-Host "Registry and Group Policy settings applied." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to set registry/group policy for Windows Update." -ForegroundColor Yellow
+    }
+
+    # 3. Disable Windows Update scheduled tasks
+    $tasks = @(
+        "\Microsoft\Windows\WindowsUpdate\*",
+        "\Microsoft\Windows\UpdateOrchestrator\*",
+        "\Microsoft\Windows\Windows Defender\*"
+    )
+    foreach ($task in $tasks) {
+        try {
+            Get-ScheduledTask -TaskPath $task -ErrorAction SilentlyContinue | Disable-ScheduledTask -ErrorAction SilentlyContinue
+            Write-Host "Disabled scheduled tasks in: $task" -ForegroundColor Green
+        } catch {
+            Write-Host "Could not disable tasks in: $task" -ForegroundColor Yellow
+        }
+    }
+
+    # 4. (Optional) Block Windows Update domains in hosts file
+    $hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
+    $updateDomains = @(
+        "windowsupdate.microsoft.com",
+        "update.microsoft.com",
+        "download.windowsupdate.com",
+        "wustat.windows.com",
+        "ntservicepack.microsoft.com",
+        "stats.microsoft.com",
+        "sls.microsoft.com",
+        "fe2.update.microsoft.com.akadns.net",
+        "fe2.ws.microsoft.com",
+        "windowsupdate.com"
+    )
+    try {
+        $hostsContent = Get-Content $hostsPath -ErrorAction SilentlyContinue
+        foreach ($domain in $updateDomains) {
+            if ($hostsContent -notcontains ("127.0.0.1 $domain")) {
+                Add-Content -Path $hostsPath -Value "127.0.0.1 $domain"
+            }
+        }
+        Write-Host "Blocked Windows Update domains in hosts file." -ForegroundColor Green
+    } catch {
+        Write-Host "Could not modify hosts file." -ForegroundColor Yellow
+    }
+
+    Write-Host "Windows Update is now EXTREMELY disabled!" -ForegroundColor Magenta
+}
+
 # Main Menu Function
 function Show-Menu {
     Clear-Host
@@ -546,7 +631,8 @@ function Show-Menu {
     Write-Host "9: Gaming Optimization"
     Write-Host "10: Security Optimization"
     Write-Host "11: Advanced System Optimization"
-    Write-Host "12: Run All Optimizations"
+    Write-Host "12: Extreme Windows Update Disabler"
+    Write-Host "13: Run All Optimizations"
     Write-Host "Q: Quit"
     Write-Host "====================================================" -ForegroundColor Cyan
 }
@@ -613,6 +699,10 @@ do {
             pause
         }
         '12' {
+            Disable-WindowsUpdateExtreme
+            pause
+        }
+        '13' {
             Optimize-Memory
             Optimize-CPU
             Optimize-GPU
@@ -624,6 +714,7 @@ do {
             Optimize-Gaming
             Optimize-Security
             Optimize-AdvancedSystem
+            Disable-WindowsUpdateExtreme
             Write-Host "`nAll optimizations completed! Please restart your computer for changes to take effect." -ForegroundColor Green
             pause
         }
